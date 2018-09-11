@@ -16,6 +16,7 @@ class OandaApi(metaclass=Singleton):
     headers = {
         "Authorization": f"Bearer {config.OANDA_TOKEN}",
         "Accept-Datetime-Format": config.OANDA_DATETIME_FORMAT,
+        "Content-Type": "application/json",
     }
 
     @classmethod
@@ -23,6 +24,8 @@ class OandaApi(metaclass=Singleton):
         kwargs["params"] = {
             k: v for k, v in kwargs.get("params", {}).items() if v is not None
         }
+        if "data" in kwargs:
+            kwargs["data"] = json.dumps(kwargs["data"])
         async with aiohttp.ClientSession() as session:
             async with getattr(session, method.lower())(
                 url=f"{config.OANDA_URL}{path}", headers=cls.headers, **kwargs
@@ -54,11 +57,11 @@ class OandaApi(metaclass=Singleton):
         if "errorMessage" in data:
             raise OandaException(data["errorMessage"])
 
-    async def account(self, account_id: str):
+    async def account(self, *, account_id: str):
         data = await self._call_endpoint(method="get", path=f"/accounts/{account_id}")
         return models.Account.from_json(data)
 
-    async def instruments(self, account_id: str) -> t.List[str]:
+    async def instruments(self, *, account_id: str) -> t.List[str]:
         data = await self._call_endpoint(
             method="get", path=f"/accounts/{account_id}/instruments/"
         )
@@ -66,6 +69,7 @@ class OandaApi(metaclass=Singleton):
 
     async def pricing(
         self,
+        *,
         account_id: str,
         instruments: t.Iterable[str],
         since: datetime.datetime = None,
@@ -81,7 +85,7 @@ class OandaApi(metaclass=Singleton):
         return [models.Price.from_json(p) for p in data["prices"]]
 
     async def stream_pricing(
-        self, account_id: str, instruments: t.Iterable[str]
+        self, *, account_id: str, instruments: t.Iterable[str]
     ) -> t.AsyncIterable[models.Price]:
         async for data in self._stream_endpoint(
             method="get",
@@ -90,3 +94,42 @@ class OandaApi(metaclass=Singleton):
         ):
             if data["type"] == "PRICE":
                 yield models.Price.from_json(data)
+
+    async def candles(
+        self,
+        *,
+        instrument: str,
+        timeframe: t.Tuple[datetime.datetime, datetime.datetime],
+        granularity: models.Granularity = models.Granularity.S5,
+    ) -> t.Iterable[models.Candle]:
+        data = await self._call_endpoint(
+            method="get",
+            path=f"/instruments/{instrument}/candles/",
+            params={
+                "from": str(timeframe[0].timestamp()),
+                "to": str(timeframe[1].timestamp()),
+                "granularity": granularity.value,
+            },
+        )
+        return (models.Candle.from_json(c) for c in data["candles"])
+
+    async def create_order(
+        self,
+        *,
+        account_id: str,
+        instrument: str,
+        units: int,
+        order_type: models.OrderType = models.OrderType.MARKET,
+    ):
+        data = await self._call_endpoint(
+            method="post",
+            path=f"/accounts/{account_id}/orders/",
+            data={
+                "order": {
+                    "instrument": instrument,
+                    "units": units,
+                    "type": order_type.value,
+                }
+            },
+        )
+        print(data)

@@ -7,9 +7,15 @@ from trader.trader import Trader
 
 
 async def main():
-    account = await oanda.api.OandaApi().account(oanda.config.OANDA_ACCOUNT_ID)
-    trader = Trader(account=account, instruments=["USD_PLN", "EUR_USD"])
-    await trader.run_forever()
+    # await oanda.api.OandaApi().create_order(
+    #     account_id=oanda.config.OANDA_ACCOUNT_ID, instrument="EUR_USD", units=1
+    # )
+    account = await oanda.api.OandaApi().account(
+        account_id=oanda.config.OANDA_ACCOUNT_ID
+    )
+    print(account)
+    # trader = Trader(account=account, instruments=["USD_PLN", "EUR_USD"])
+    # await trader.run_forever()
 
 
 if __name__ == "__main__":

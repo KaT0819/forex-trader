@@ -21,8 +21,9 @@ class Prices(metaclass=Singleton):
             prices = await OandaApi().pricing(
                 config.OANDA_ACCOUNT_ID,
                 instruments=[instrument],
-                since=datetime.datetime.utcnow() - config.FETCH_DATA_BACK,
+                since=datetime.datetime.now(),
             )
+            print(prices)
             for price in prices:
                 listener(price)
             self._listeners[instrument] = [listener]

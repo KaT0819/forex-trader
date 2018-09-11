@@ -1,1 +1,3 @@
 aiohttp
+pandas
+black
