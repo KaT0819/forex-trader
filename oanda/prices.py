@@ -19,11 +19,10 @@ class Prices(metaclass=Singleton):
         if instrument not in self._listeners:
             start_loop = not bool(self._listeners)
             prices = await OandaApi().pricing(
-                config.OANDA_ACCOUNT_ID,
+                account_id=config.OANDA_ACCOUNT_ID,
                 instruments=[instrument],
                 since=datetime.datetime.now(),
             )
-            print(prices)
             for price in prices:
                 listener(price)
             self._listeners[instrument] = [listener]
@@ -35,7 +34,7 @@ class Prices(metaclass=Singleton):
     async def run_forever(self):
         instruments = self._listeners.keys()
         async for price in OandaApi().stream_pricing(
-            config.OANDA_ACCOUNT_ID, instruments
+            account_id=config.OANDA_ACCOUNT_ID, instruments=instruments
         ):
             for listener in self._listeners[price.instrument]:
                 listener(price)

@@ -1,34 +1,29 @@
-import asyncio
-from datetime import datetime, timedelta
-import typing as t
-
 from oanda import models
-from oanda.api import OandaApi
 from oanda.prices import Prices
 
-from .strategies import Strategy
+from .strategies import MomentumStrategy, StrategyDecision
 
 
 class Trader:
-    def __init__(self, account: models.Account, instruments: t.List[str]):
+    def __init__(self, account: models.Account, instrument: str) -> None:
         self.account = account
-        self.instruments = instruments
-        self.strategy = Strategy()
+        self.instrument = instrument
+        self.strategy = MomentumStrategy(instrument=self.instrument)
 
     def __repr__(self):
-        return f"<Trader(account={self.account})>"
+        return f"<Trader(instrument={self.instrument})>"
 
-    async def run_forever(self):
-        candles = await OandaApi().candles(
-            instrument="EUR_USD",
-            timeframe=(datetime.now() - timedelta(hours=1), datetime.now()),
-        )
-        self.strategy.learn(candles)
-        asyncio.ensure_future(self.account.report_balance())
-        for instrument in self.instruments:
-            await Prices().subscribe(instrument=instrument, listener=self.listen)
-        while True:
-            await asyncio.sleep(1)
+    async def run_forever(self) -> None:
+        await self.strategy.learn()
+        await Prices().subscribe(instrument=self.instrument, listener=self.listen)
 
     def listen(self, price: models.Price):
-        pass
+        decision = self.strategy.feed(price)
+        if decision == StrategyDecision.SELL:
+            pass
+
+        elif decision == StrategyDecision.BUY:
+            pass
+
+        elif decision == StrategyDecision.DO_NOTHING:
+            pass

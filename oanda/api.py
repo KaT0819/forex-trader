@@ -42,7 +42,7 @@ class OandaApi(metaclass=Singleton):
             k: v for k, v in kwargs.get("params", {}).items() if v is not None
         }
         async with aiohttp.ClientSession(
-            timeout=aiohttp.ClientTimeout(total=0)
+            timeout=aiohttp.ClientTimeout(total=0)  # type: ignore
         ) as session:
             async with getattr(session, method.lower())(
                 url=f"{config.OANDA_STREAMING_URL}{path}", headers=cls.headers, **kwargs
@@ -61,11 +61,11 @@ class OandaApi(metaclass=Singleton):
         data = await self._call_endpoint(method="get", path=f"/accounts/{account_id}")
         return models.Account.from_json(data)
 
-    async def instruments(self, *, account_id: str) -> t.List[str]:
+    async def instruments(self, *, account_id: str) -> t.Iterable[str]:
         data = await self._call_endpoint(
             method="get", path=f"/accounts/{account_id}/instruments/"
         )
-        return [i["name"] for i in data["instruments"]]
+        return (i["name"] for i in data["instruments"])
 
     async def pricing(
         self,
@@ -73,7 +73,7 @@ class OandaApi(metaclass=Singleton):
         account_id: str,
         instruments: t.Iterable[str],
         since: datetime.datetime = None,
-    ):
+    ) -> t.Iterable[models.Price]:
         data = await self._call_endpoint(
             method="get",
             path=f"/accounts/{account_id}/pricing/",
@@ -82,7 +82,7 @@ class OandaApi(metaclass=Singleton):
                 "since": since and int(since.timestamp()),
             },
         )
-        return [models.Price.from_json(p) for p in data["prices"]]
+        return (models.Price.from_json(p) for p in data["prices"])
 
     async def stream_pricing(
         self, *, account_id: str, instruments: t.Iterable[str]
@@ -132,4 +132,4 @@ class OandaApi(metaclass=Singleton):
                 }
             },
         )
-        print(data)
+        return data

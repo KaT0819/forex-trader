@@ -1,8 +1,8 @@
-from decimal import Decimal, ROUND_HALF_UP
+from decimal import Decimal
 
 
 class Money:
-    def __init__(self, currency: str, amount: float):
+    def __init__(self, currency: str, amount: float) -> None:
         self.currency: str = currency
         self.amount = Decimal(amount)
 
@@ -13,7 +13,7 @@ class Money:
             and self.amount == other.amount
         )
 
-    def __ne__(self, other: "Money") -> bool:
+    def __ne__(self, other) -> bool:
         return not self.__eq__(other)
 
     def __gt__(self, other: "Money") -> bool:

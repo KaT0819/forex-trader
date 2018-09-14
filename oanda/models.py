@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import asyncio
+import colorama
+import copy
 import datetime
 import decimal
 import enum
@@ -73,14 +75,14 @@ class Candle:
 @dataclass()
 class Units:
     amount: int
-    average_price: decimal.Decimal
+    average_price: t.Optional[decimal.Decimal]
 
     @classmethod
     def from_json(cls, data: dict) -> Units:
         average_price = data.get("averagePrice")
         return Units(
             amount=int(data["units"]),
-            average_price=average_price and decimal.Decimal(average_price),
+            average_price=decimal.Decimal(average_price) if average_price else None,
         )
 
 
@@ -105,13 +107,18 @@ class Account:
     balance: Money
     positions: t.List[Position]
 
-    async def report_balance(self):
-        print(self)
+    async def run_forever(self):
+        print(colorama.Style.BRIGHT + str(self))
         while True:
-            last_balance = self.balance
+            account = copy.deepcopy(self)
             await asyncio.sleep(1)
-            if last_balance != self.balance:
-                print(self)
+            if account != self:
+                if account.balance > self.balance:
+                    print(colorama.Style.BRIGHT + colorama.Fore.GREEN + str(self))
+                if account.balance < self.balance:
+                    print(colorama.Style.BRIGHT + colorama.Fore.RED + str(self))
+                else:
+                    print(colorama.Style.BRIGHT + str(self))
 
     @classmethod
     def from_json(cls, data: dict) -> Account:
