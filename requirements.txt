@@ -1,4 +1,5 @@
 aiohttp
+aiohttp-devtools
 pandas
 plotly
 colorama
@@ -6,3 +7,4 @@ colorama
 black
 mypy
 pytest
+pytest-factoryboy

@@ -1,13 +1,10 @@
 from __future__ import annotations
 
-import asyncio
-import colorama
-import copy
-import datetime
-import decimal
+from dataclasses import dataclass, asdict
+from datetime import datetime
+from decimal import Decimal
 import enum
 import typing as t
-from dataclasses import dataclass
 
 from utils.money import Money
 
@@ -52,22 +49,22 @@ class OrderType(enum.Enum):
 @dataclass()
 class Candle:
     complete: bool
-    open: decimal.Decimal
-    close: decimal.Decimal
-    low: decimal.Decimal
-    high: decimal.Decimal
+    open: Decimal
+    close: Decimal
+    low: Decimal
+    high: Decimal
     volume: int
-    time: datetime.datetime
+    time: datetime
 
     @classmethod
     def from_json(cls, data: dict) -> Candle:
         mid: dict = data.pop("mid")
         return Candle(
-            open=decimal.Decimal(mid["o"]),
-            close=decimal.Decimal(mid["c"]),
-            high=decimal.Decimal(mid["h"]),
-            low=decimal.Decimal(mid["l"]),
-            time=datetime.datetime.fromtimestamp(float(data.pop("time"))),
+            open=Decimal(mid["o"]),
+            close=Decimal(mid["c"]),
+            high=Decimal(mid["h"]),
+            low=Decimal(mid["l"]),
+            time=datetime.fromtimestamp(float(data.pop("time"))),
             **data,
         )
 
@@ -75,14 +72,14 @@ class Candle:
 @dataclass()
 class Units:
     amount: int
-    average_price: t.Optional[decimal.Decimal]
+    average_price: t.Optional[Decimal]
 
     @classmethod
     def from_json(cls, data: dict) -> Units:
         average_price = data.get("averagePrice")
         return Units(
             amount=int(data["units"]),
-            average_price=decimal.Decimal(average_price) if average_price else None,
+            average_price=Decimal(average_price) if average_price else None,
         )
 
 
@@ -107,19 +104,6 @@ class Account:
     balance: Money
     positions: t.List[Position]
 
-    async def run_forever(self):
-        print(colorama.Style.BRIGHT + str(self))
-        while True:
-            account = copy.deepcopy(self)
-            await asyncio.sleep(1)
-            if account != self:
-                if account.balance > self.balance:
-                    print(colorama.Style.BRIGHT + colorama.Fore.GREEN + str(self))
-                if account.balance < self.balance:
-                    print(colorama.Style.BRIGHT + colorama.Fore.RED + str(self))
-                else:
-                    print(colorama.Style.BRIGHT + str(self))
-
     @classmethod
     def from_json(cls, data: dict) -> Account:
         return Account(
@@ -135,17 +119,104 @@ class Account:
 
 
 @dataclass()
+class PriceBucket:
+    price: Decimal
+    liquidity: int
+
+    @classmethod
+    def from_json(cls, data: dict) -> PriceBucket:
+        return PriceBucket(
+            price=Decimal(data["price"]), liquidity=int(data["liquidity"])
+        )
+
+
+@dataclass()
 class Price:
     instrument: str
-    time: datetime.datetime
-    asks: decimal.Decimal
-    bids: decimal.Decimal
+    time: datetime
+    tradeable: bool
+    asks: t.List[PriceBucket]
+    bids: t.List[PriceBucket]
+    closeout_bid: Decimal
+    closeout_ask: Decimal
 
     @classmethod
     def from_json(cls, data: dict) -> Price:
+        assert data["type"] == "PRICE"
         return Price(
             instrument=data["instrument"],
-            time=datetime.datetime.fromtimestamp(float(data["time"])),
-            asks=decimal.Decimal(data["asks"][0]["price"]),
-            bids=decimal.Decimal(data["bids"][0]["price"]),
+            tradeable=data["tradeable"],
+            time=datetime.fromtimestamp(float(data["time"])),
+            closeout_bid=Decimal(data["closeoutBid"]),
+            closeout_ask=Decimal(data["closeoutAsk"]),
+            asks=[PriceBucket.from_json(d) for d in data["asks"]],
+            bids=[PriceBucket.from_json(d) for d in data["bids"]],
+        )
+
+    @property
+    def spread(self) -> Decimal:
+        return (self.asks - self.bids) / self.asks
+
+
+@dataclass()
+class TransactionHeartbeat:
+    time: datetime
+    last_transaction_id: int
+
+    @classmethod
+    def from_json(cls, data: dict) -> TransactionHeartbeat:
+        return TransactionHeartbeat(
+            time=datetime.fromtimestamp(float(data["time"])),
+            last_transaction_id=int(data["lastTransactionID"]),
+        )
+
+
+@dataclass()
+class Transaction:
+    id: int
+    time: datetime
+    account_id: str
+
+    @classmethod
+    def from_json(cls, data: dict) -> Transaction:
+        return Transaction(
+            id=int(data["id"]),
+            time=datetime.fromtimestamp(float(data["time"])),
+            account_id=data["accountID"],
+        )
+
+
+@dataclass()
+class TransferFundsTransaction(Transaction):
+    account_balance: Decimal
+
+    @classmethod
+    def from_json(cls, data: dict) -> DailyFinancingTransaction:
+        return DailyFinancingTransaction(
+            account_balance=Decimal(data["accountBalance"]),
+            **asdict(Transaction.from_json(data)),
+        )
+
+
+@dataclass()
+class OrderFillTransaction(Transaction):
+    account_balance: Decimal
+
+    @classmethod
+    def from_json(cls, data: dict) -> DailyFinancingTransaction:
+        return DailyFinancingTransaction(
+            account_balance=Decimal(data["accountBalance"]),
+            **asdict(Transaction.from_json(data)),
+        )
+
+
+@dataclass()
+class DailyFinancingTransaction(Transaction):
+    account_balance: Decimal
+
+    @classmethod
+    def from_json(cls, data: dict) -> DailyFinancingTransaction:
+        return DailyFinancingTransaction(
+            account_balance=Decimal(data["accountBalance"]),
+            **asdict(Transaction.from_json(data)),
         )

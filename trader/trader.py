@@ -1,3 +1,5 @@
+from datetime import timedelta
+
 from oanda import models
 from oanda.prices import Prices
 
@@ -8,7 +10,9 @@ class Trader:
     def __init__(self, account: models.Account, instrument: str) -> None:
         self.account = account
         self.instrument = instrument
-        self.strategy = MomentumStrategy(instrument=self.instrument)
+        self.strategy = MomentumStrategy(
+            instrument=self.instrument, period=timedelta(seconds=30)
+        )
 
     def __repr__(self):
         return f"<Trader(instrument={self.instrument})>"
