@@ -9,16 +9,15 @@ from aiohttp import web
 import oanda
 from oanda import models
 from oanda.api import OandaApi
-
 from trader.listeners import BalanceListener
 from trader.trader import Trader
-
 import server
+from config import config
 
 
 def setup():
     plotly.tools.set_credentials_file(
-        username="karol-gruszczyk", api_key="7t1SnfeRfsKEUxD1zMrJ"
+        username=config["plotly"]["username"], api_key=config["plotly"]["api_key"]
     )
 
 

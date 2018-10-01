@@ -106,3 +106,6 @@ venv.bak/
 .idea
 venv
 v20-python-samples
+
+# env
+config.ini

@@ -1,0 +1,8 @@
+{
+  "name": "forex-trader",
+  "version": "1.0.0",
+  "main": "index.js",
+  "repository": "git@github.com:karol-gruszczyk/forex-trader.git",
+  "author": "karol-gruszczyk <karol.gruszczyk@gmail.com>",
+  "license": "MIT"
+}
