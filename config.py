@@ -6,11 +6,11 @@ class ImproperlyConfigured(RuntimeError):
 
 
 class ConfigSection(dict):
-    def __init__(self, iterable, *, name: str):
+    def __init__(self, iterable, *, name: str) -> None:
         self.name = name
         super().__init__(iterable)
 
-    def __getitem__(self, item):
+    def __getitem__(self, item) -> str:
         try:
             return super().__getitem__(item)
         except KeyError:
@@ -20,7 +20,7 @@ class ConfigSection(dict):
 
 
 class Config:
-    def __init__(self, filename: str):
+    def __init__(self, filename: str) -> None:
         self.filename = filename
         self._config = configparser.ConfigParser()
         self._config.read(self.filename)

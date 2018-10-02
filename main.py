@@ -9,6 +9,7 @@ from aiohttp import web
 import oanda
 from oanda import models
 from oanda.api import OandaApi
+from rss.feed import RssFeed
 from trader.listeners import BalanceListener
 from trader.trader import Trader
 import server
@@ -29,6 +30,9 @@ async def listen_on_transactions(account: models.Account):
 
 
 async def main():
+    feed = await rss_feed.feed
+    async for entry in rss_feed.listen():
+        print(entry)
     account = await oanda.api.OandaApi().account(
         account_id=oanda.config.OANDA_ACCOUNT_ID
     )
@@ -40,6 +44,8 @@ async def main():
     ]:
         asyncio.ensure_future(trader.run_forever())
 
+
+rss_feed = RssFeed("https://rss.dailyfx.com/feeds/forex_market_news")
 
 setup()
 asyncio.ensure_future(main())
