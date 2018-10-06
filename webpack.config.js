@@ -1,39 +1,52 @@
-const path = require("path");
+const path = require('path');
+const CleanWebpackPlugin = require('clean-webpack-plugin');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 
 module.exports = {
-    entry: "./frontend/index.tsx",
+    entry: './frontend/index.tsx',
     output: {
-        path: path.resolve(__dirname, "dist"),
-        filename: "index_bundle.js",
+        filename: '[name].bundle.js',
+        chunkFilename: '[name].bundle.js',
+        path: path.resolve(__dirname, 'dist'),
     },
     resolve: {
-        extensions: [".ts", ".tsx", ".js"]
+        modules: [__dirname, 'node_modules'],
+        extensions: ['.ts', '.tsx', '.js'],
     },
+    devtool: 'inline-source-map',
     module: {
         strictExportPresence: true,
         rules: [
             {
                 test: /\.tsx?$/,
                 use: [
-                    {loader: "awesome-typescript-loader"},
+                    { loader: 'awesome-typescript-loader' },
                 ],
                 exclude: /node_modules/,
             },
             {
-                test: /\.ejs$/,
-                loader: 'ejs-loader',
-                query: {
-                    interpolate: /{{(.+?)}}/g,
-                    evaluate: /\[\[(.+?)]]/g
+                test: /\.css$/,
+                loader: ['style-loader', 'css-loader'],
+            },
+            { test: /\.(png|svg)$/, loader: 'file-loader' },
+            {
+                test: /\.(eot|ttf|woff|woff2)$/, loader: 'file-loader',
+                options: {
+                    name: '[name].[ext]',
+                    outputPath: 'fonts/',
                 },
-                exclude: /node_modules/,
             },
         ],
     },
     plugins: [
+        new CleanWebpackPlugin('dist'),
         new HtmlWebpackPlugin({
-            template: path.resolve(__dirname, "frontend/index.html"),
-        })
-    ]
+            template: path.resolve(__dirname, 'frontend/index.html'),
+        }),
+    ],
+    optimization: {
+        splitChunks: {
+            chunks: 'all',
+        },
+    },
 };
