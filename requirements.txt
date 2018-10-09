@@ -1,8 +1,10 @@
 aiohttp
-aiohttp-devtools
+django
 pandas
 plotly
 colorama
+
+aiohttp-devtools
 
 black
 mypy

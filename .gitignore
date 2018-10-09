@@ -111,3 +111,4 @@ v20-python-samples
 
 # env
 config.ini
+*.sqlite3
