@@ -1,15 +1,19 @@
 import * as React from 'react';
 import { Menu, Segment, Sidebar } from 'semantic-ui-react';
 
-interface MainSidebarProps {
-    children: JSX.Element | JSX.Element[];
-}
-
-export class MainSidebar extends React.Component<MainSidebarProps> {
+export class AccountSidebar extends React.PureComponent {
     render(): JSX.Element {
         return (
-            <Sidebar.Pushable as={Segment} className="sidebar-container">
-                <Sidebar as={Menu} animation="scale down" icon="labeled" inverted visible={true} width="thin">
+            <Sidebar.Pushable as={Segment}>
+                <Sidebar
+                    as={Menu}
+                    animation="scale down"
+                    icon="labeled"
+                    inverted
+                    direction="top"
+                    visible={true}
+                    width="thin"
+                >
                     <Menu.Item as="a">Home</Menu.Item>
                 </Sidebar>
 

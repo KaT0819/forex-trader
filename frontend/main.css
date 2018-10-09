@@ -1,4 +1,5 @@
 @import "~semantic-ui-css/semantic.min.css";
+@import "./trader/styles.css";
 
 .sidebar-container {
     min-height: 100vh;

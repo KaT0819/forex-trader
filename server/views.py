@@ -5,6 +5,6 @@ from aiohttp import web
 routes = web.RouteTableDef()
 
 
-@routes.get("/")
-async def health_check(request: web.Request) -> web.Response:
+@routes.get("/traders/")
+async def traders(request: web.Request) -> web.Response:
     return web.Response(text="OK")

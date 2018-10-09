@@ -30,9 +30,6 @@ async def listen_on_transactions(account: models.Account):
 
 
 async def main():
-    feed = await rss_feed.feed
-    async for entry in rss_feed.listen():
-        print(entry)
     account = await oanda.api.OandaApi().account(
         account_id=oanda.config.OANDA_ACCOUNT_ID
     )
@@ -52,4 +49,4 @@ asyncio.ensure_future(main())
 
 app = web.Application()
 app.add_routes(server.views.routes)
-web.run_app(app)
+web.run_app(app, port="8000")
